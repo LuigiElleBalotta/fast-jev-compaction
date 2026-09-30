@@ -109,6 +109,7 @@ put it in a source file.
 | `preserveRecentMessages` | `6` | Newest messages never touched (the first is always kept) |
 | `maxStateTokens` | `25000` | Estimated token ceiling for the state |
 | `maxRequestTokens` | `30000` | Estimated ceiling for state plus one batch of questions |
+| `maxQuestionsPerRequest` | `64` | Questions per request (two per tool call); Rizzo Flow rejects more than 64 |
 | `truncateHeadChars` | `300` | Characters of a dropped tool result retained before its note |
 
 `result.stats` reports message and character counts before and after, the
@@ -189,3 +190,20 @@ demo/JevDemo/build.sh   # builds demo/JevDemo/build/JevDemo.app and launches it
 ```
 
 Press space in the app to replay from the start.
+
+## Local backend: Rizzo Flow (custom branch)
+
+This fork can talk to any Jev-compatible server, e.g.
+[Rizzo Flow](https://github.com/LuigiElleBalotta/rizzo-flow) (`rizzo serve`, default
+`--ctx 16384 --kv-type q8_0` on the `custom` branch). Plugin options:
+
+- `baseUrl`: `http://127.0.0.1:8017/v1/systemone`
+- `model`: `rizzo-latest`
+- `apiKey`: any non-empty placeholder (Rizzo checks it only if `RIZZO_API_KEY` is set)
+- `maxStateTokens` / `maxRequestTokens`: keep them under the server's `--ctx`
+  (e.g. `12000` / `14000` for `--ctx 16384`); Rizzo rejects longer inputs, never truncates.
+- `maxQuestionsPerRequest`: `64` (Rizzo's limit).
+
+`examples/rizzo-eval.ts` runs a synthetic transcript against the local server and prints
+per-request latency and every keep/drop decision. Rizzo's probabilities are not calibrated
+like Jev's: `keepResult` rarely reaches 0.5, so results are almost always truncated.

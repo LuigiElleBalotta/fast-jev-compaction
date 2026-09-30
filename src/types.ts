@@ -105,6 +105,8 @@ export interface CompactOptions {
   maxRequestTokens?: number;
   /** Characters of a dropped tool result to retain. Default 300. */
   truncateHeadChars?: number;
+  /** Maximum questions in one request (two per tool call). Default 64, the limit of Rizzo Flow. */
+  maxQuestionsPerRequest?: number;
 }
 
 export interface ResolvedCompactOptions {
@@ -114,6 +116,7 @@ export interface ResolvedCompactOptions {
   maxStateTokens: number;
   maxRequestTokens: number;
   truncateHeadChars: number;
+  maxQuestionsPerRequest: number;
 }
 
 export interface CompactResult {

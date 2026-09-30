@@ -68,6 +68,20 @@ describe('hook config', () => {
   });
 });
 
+describe('baseUrl', () => {
+  it('reads baseUrl from userConfig and sends the request there', async () => {
+    const urls: string[] = [];
+    const config = { ...resolveHookConfig({ preserveRecentMessages: 1, baseUrl: 'http://127.0.0.1:8017/v1/systemone' }), apiKey: 'k' };
+    expect(config.baseUrl).toBe('http://127.0.0.1:8017/v1/systemone');
+    const fetchFn = jevFetch(() => 0.1);
+    await compactSession(transcript(), config, async (url, init) => {
+      urls.push(url);
+      return fetchFn(url, init);
+    });
+    expect(urls).toEqual(['http://127.0.0.1:8017/v1/systemone']);
+  });
+});
+
 describe('session message mapping', () => {
   it('returns the engine objects for untouched messages and handle-less copies for rebuilt ones', () => {
     const messages = transcript();

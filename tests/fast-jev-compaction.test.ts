@@ -253,6 +253,12 @@ describe('question batching', () => {
   it('throws when a single question does not fit', () => {
     expect(() => batchCalls(calls, 29_990, options)).toThrow(/no room/);
   });
+
+  it('caps the questions of a request', () => {
+    const many = Array.from({ length: 70 }, (_, i) => ({ ...calls[0]!, id: `t${i + 1}` }));
+    const batches = batchCalls(many, 1000, { maxRequestTokens: 30_000, maxQuestionsPerRequest: 64 });
+    expect(batches.map((b) => b.length)).toEqual([32, 32, 6]);
+  });
 });
 
 describe('decisions', () => {

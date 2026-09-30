@@ -46,11 +46,23 @@
       "description": "Estimated token budget for state plus questions in one Jev request.",
       "default": 30000
     },
+    "maxQuestionsPerRequest": {
+      "type": "number",
+      "title": "Maximum questions per request",
+      "description": "Questions sent in one request (two per tool call); more calls are split into several requests. Rizzo Flow accepts 64.",
+      "default": 64
+    },
     "truncateHeadChars": {
       "type": "number",
       "title": "Truncated tool result head",
       "description": "Characters of a tool result kept when Jev decides its full output is no longer needed; 0 keeps only the note.",
       "default": 300
+    },
+    "baseUrl": {
+      "type": "string",
+      "title": "System One endpoint",
+      "description": "Override the System One URL, e.g. a local Jev-compatible server. Leave unset for the TypeSafe API.",
+      "default": "https://api.typesafe.ai/v1/systemone"
     },
     "model": {
       "type": "string",
