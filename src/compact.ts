@@ -226,7 +226,75 @@ export function applyDecisions(
     if (toolResults.length > 0) rebuilt.toolResults = toolResults;
     kept.push(rebuilt);
   }
-  return kept;
+  return pairToolResults(kept);
+}
+
+/**
+ * True when every run of assistant messages with tool calls is followed, before
+ * anything else, by result-only user messages answering all of them.
+ */
+function isPaired(messages: readonly Message[]): boolean {
+  let i = 0;
+  while (i < messages.length) {
+    const message = messages[i]!;
+    if (message.role !== 'assistant' || message.toolUses.length === 0) {
+      i += 1;
+      continue;
+    }
+    const wanted = new Set<string>();
+    while (i < messages.length && messages[i]!.role === 'assistant' && messages[i]!.toolUses.length > 0) {
+      for (const tool of messages[i]!.toolUses) wanted.add(tool.tool_use_id);
+      i += 1;
+    }
+    while (i < messages.length && wanted.size > 0) {
+      const next = messages[i]!;
+      const results = next.toolResults ?? [];
+      if (next.role !== 'user' || next.text.trim().length > 0 || results.length === 0) break;
+      for (const r of results) wanted.delete(r.tool_use_id);
+      i += 1;
+    }
+    if (wanted.size > 0) return false;
+  }
+  return true;
+}
+
+/**
+ * Puts every tool_result right after the assistant message holding its
+ * tool_use. Claude Code writes parallel calls interleaved (call, call, result,
+ * call, result, ...); a list rebuilt from that order is not valid for the API
+ * and the engine reports the unpaired calls as "Tool result missing due to
+ * internal error". Messages are moved, never changed; a result-only user
+ * message is split per call group, other messages keep their place.
+ */
+export function pairToolResults(messages: readonly Message[]): Message[] {
+  if (isPaired(messages)) return [...messages];
+  const callIds = new Set<string>();
+  for (const message of messages) for (const tool of message.toolUses) callIds.add(tool.tool_use_id);
+  const isResultOnly = (m: Message): boolean =>
+    m.role === 'user' &&
+    m.text.trim().length === 0 &&
+    m.toolUses.length === 0 &&
+    (m.toolResults ?? []).length > 0 &&
+    (m.toolResults ?? []).every((r) => callIds.has(r.tool_use_id));
+  const pending = new Map<string, ToolResult>();
+  for (const message of messages) {
+    if (isResultOnly(message)) for (const r of message.toolResults!) pending.set(r.tool_use_id, r);
+  }
+  const out: Message[] = [];
+  for (const message of messages) {
+    if (isResultOnly(message)) continue;
+    out.push(message);
+    if (message.role !== 'assistant' || message.toolUses.length === 0) continue;
+    const results = message.toolUses
+      .map((tool) => pending.get(tool.tool_use_id))
+      .filter((r): r is ToolResult => r !== undefined);
+    if (results.length === 0) continue;
+    for (const r of results) pending.delete(r.tool_use_id);
+    out.push({ role: 'user', text: '', toolUses: [], toolResults: results });
+  }
+  // results whose call is not in an assistant message of this list: keep them, at the end of their turn
+  for (const r of pending.values()) out.push({ role: 'user', text: '', toolUses: [], toolResults: [r] });
+  return out;
 }
 
 /** Characters of text, tool input and tool output a message holds. */

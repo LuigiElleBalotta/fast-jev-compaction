@@ -10,6 +10,7 @@ import {
   estimateTokens,
   fitState,
   JevClient,
+  pairToolResults,
   parseJevResponse,
   reductionRatio,
   resolveOptions,
@@ -258,6 +259,34 @@ describe('question batching', () => {
     const many = Array.from({ length: 70 }, (_, i) => ({ ...calls[0]!, id: `t${i + 1}` }));
     const batches = batchCalls(many, 1000, { maxRequestTokens: 30_000, maxQuestionsPerRequest: 64 });
     expect(batches.map((b) => b.length)).toEqual([32, 32, 6]);
+  });
+});
+
+describe('pairToolResults', () => {
+  const res = (id: string): Message =>
+    message('user', '', { toolResults: [{ tool_use_id: id, text: `out ${id}` }] });
+
+  it('moves interleaved parallel results right after their call', () => {
+    const interleaved = [
+      message('user', 'go'),
+      call('a', 'Read', {}, 'out a'),
+      call('b', 'Read', {}, 'out b'),
+      res('a'),
+      call('c', 'Read', {}, 'out c'),
+      res('b'),
+      res('c'),
+    ];
+    const paired = pairToolResults(interleaved);
+    expect(
+      paired.map((m) => m.text || m.toolUses[0]?.tool_use_id || `r:${m.toolResults![0]!.tool_use_id}`),
+    ).toEqual(['go', 'a', 'r:a', 'b', 'r:b', 'c', 'r:c']);
+  });
+
+  it('leaves an already paired list untouched', () => {
+    const ok = [message('user', 'go'), call('a', 'Read', {}, 'x'), call('b', 'Read', {}, 'y'), res('a'), res('b')];
+    const out = pairToolResults(ok);
+    expect(out).toEqual(ok);
+    expect(out.every((m, i) => m === ok[i])).toBe(true);
   });
 });
 
