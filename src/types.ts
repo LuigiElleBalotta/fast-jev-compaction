@@ -10,6 +10,8 @@ export interface ToolUse {
   input: Record<string, unknown>;
   text?: string;
   isError?: boolean;
+  /** The record Claude Code stored for the call; replaced together with `text`. */
+  result?: unknown;
 }
 
 /** A tool_result block of a user message. */
@@ -17,6 +19,8 @@ export interface ToolResult {
   tool_use_id: string;
   text: string;
   isError?: boolean;
+  /** The record Claude Code stored for the call; replaced together with `text`. */
+  result?: unknown;
 }
 
 /**

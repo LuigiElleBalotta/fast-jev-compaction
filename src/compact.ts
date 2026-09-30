@@ -11,6 +11,7 @@ import type {
   Message,
   ResolvedCompactOptions,
   ToolCall,
+  ToolResult,
   ToolUse,
 } from './types.js';
 
@@ -186,13 +187,11 @@ export function applyDecisions(
           headChars,
         );
         if ((tool.text ?? '') === text) return tool;
-        const copy: ToolUse = {
-          tool_use_id: tool.tool_use_id,
-          tool: tool.tool,
-          input: tool.input,
-          text,
-        };
-        if (tool.isError) copy.isError = true;
+        // Spread the original: Claude Code rebuilds the block from its other
+        // fields too, and a bare copy left the call without a result
+        // ("Tool result missing due to internal error").
+        const copy: ToolUse = { ...tool, text };
+        if ('result' in tool) copy.result = text;
         return copy;
       });
     const toolResults = (message.toolResults ?? [])
@@ -200,13 +199,10 @@ export function applyDecisions(
       .map((result) => {
         if (actions.get(result.tool_use_id) !== 'drop_result') return result;
         const text = truncatedResultText(result.text, result.isError ?? false, headChars);
-        return text === result.text
-          ? result
-          : {
-              tool_use_id: result.tool_use_id,
-              text,
-              isError: result.isError,
-            };
+        if (text === result.text) return result;
+        const copy: ToolResult = { ...result, text };
+        if ('result' in result) copy.result = text;
+        return copy;
       });
     if (
       !message.toolUses.some(

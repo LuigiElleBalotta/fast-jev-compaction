@@ -275,6 +275,28 @@ describe('decisions', () => {
     });
   });
 
+  it('keeps the other fields of a truncated result and truncates the stored record too', () => {
+    const messages = transcript();
+    const long = 'x'.repeat(2000);
+    Object.assign(messages[4]!.toolUses[0]!, { text: long, result: { file: long } });
+    Object.assign(messages[5]!.toolResults![0]!, { text: long, result: { file: long } });
+    const calls = collectToolCalls(messages, 0);
+    const decisions = calls.map((call) =>
+      decideCall(call, { keepCall: 0.9, keepResult: 0.1 }, options),
+    );
+    const kept = applyDecisions(messages, decisions, calls, 300);
+    const use = kept.flatMap((m) => m.toolUses).find((u) => u.tool_use_id === 'tool-2')!;
+    const res = kept.flatMap((m) => m.toolResults ?? []).find((r) => r.tool_use_id === 'tool-2')!;
+
+    expect(use.tool).toBe(messages[4]!.toolUses[0]!.tool);
+    expect(use.input).toEqual(messages[4]!.toolUses[0]!.input);
+    expect(res.isError).toBe(messages[5]!.toolResults![0]!.isError);
+    expect(use.text!.length).toBeLessThan(600);
+    expect(res.text.length).toBeLessThan(600);
+    expect(use.result).toBe(use.text);
+    expect(res.result).toBe(res.text);
+  });
+
   it('removes dropped calls and truncates dropped results', () => {
     const messages = transcript();
     messages[4]!.toolUses[0]!.text = 'x'.repeat(2000);
