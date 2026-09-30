@@ -1,73 +1,73 @@
 {
   "name": "fast-jev-compaction",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Verbatim Jev-guided compaction for Claude Code sessions.",
   "license": "MIT",
   "userConfig": {
     "apiKey": {
       "type": "string",
       "title": "apiKey",
-      "description": "API key. For TypeSafe Jev: your TYPESAFE_API_KEY (or leave unset to use the env var). For a local server such as Rizzo Flow: any non-empty placeholder, e.g. rizzo-local.",
+      "description": "API key. For TypeSafe Jev: your TYPESAFE_API_KEY (or leave unset to use the env var). For a local server such as Rizzo Flow: any non-empty placeholder, e.g. rizzo-local. [Default: (none) | Rizzo Flow: rizzo-local]",
       "sensitive": true
     },
     "keepThreshold": {
       "type": "number",
       "title": "keepThreshold",
-      "description": "Minimum Jev probability that a tool call or tool result is still needed; below it the item is removed.",
+      "description": "Minimum Jev probability that a tool call or tool result is still needed; below it the item is removed. [Default: 0.5]",
       "default": 0.5
     },
     "preserveRecentMessages": {
       "type": "number",
       "title": "preserveRecentMessages",
-      "description": "Number of newest messages pinned from compaction.",
+      "description": "Number of newest messages pinned from compaction. [Default: 6]",
       "default": 6
     },
     "compactAtPercent": {
       "type": "number",
       "title": "compactAtPercent",
-      "description": "Context percentage at which turn.complete requests compaction.",
+      "description": "Context percentage at which turn.complete requests compaction. [Default: 60]",
       "default": 60
     },
     "minReductionRatio": {
       "type": "number",
       "title": "minReductionRatio",
-      "description": "Minimum estimated character reduction required to replace history.",
+      "description": "Minimum estimated character reduction required to replace history. [Default: 0.25]",
       "default": 0.25
     },
     "maxStateTokens": {
       "type": "number",
       "title": "maxStateTokens",
-      "description": "Estimated token budget for the conversation state sent with every Jev request.",
+      "description": "Estimated token budget for the conversation state sent with every Jev request. [Default: 25000 | Rizzo Flow: 12000]",
       "default": 25000
     },
     "maxRequestTokens": {
       "type": "number",
       "title": "maxRequestTokens",
-      "description": "Estimated token budget for state plus questions in one Jev request.",
+      "description": "Estimated token budget for state plus questions in one Jev request. [Default: 30000 | Rizzo Flow: 14000]",
       "default": 30000
     },
     "maxQuestionsPerRequest": {
       "type": "number",
       "title": "maxQuestionsPerRequest",
-      "description": "Questions sent in one request (two per tool call); more calls are split into several requests. Rizzo Flow accepts 64.",
+      "description": "Questions sent in one request (two per tool call); more calls are split into several requests. Rizzo Flow accepts 64. [Default: 64 | Rizzo Flow: 64 (same)]",
       "default": 64
     },
     "truncateHeadChars": {
       "type": "number",
       "title": "truncateHeadChars",
-      "description": "Characters of a tool result kept when Jev decides its full output is no longer needed; 0 keeps only the note.",
+      "description": "Characters of a tool result kept when Jev decides its full output is no longer needed; 0 keeps only the note. [Default: 300]",
       "default": 300
     },
     "baseUrl": {
       "type": "string",
       "title": "baseUrl",
-      "description": "System One URL. Default is the TypeSafe API; for Rizzo Flow use http://127.0.0.1:8017/v1/systemone.",
+      "description": "System One URL. Default is the TypeSafe API; for Rizzo Flow use http://127.0.0.1:8017/v1/systemone. [Default: https://api.typesafe.ai/v1/systemone | Rizzo Flow: http://127.0.0.1:8017/v1/systemone]",
       "default": "https://api.typesafe.ai/v1/systemone"
     },
     "model": {
       "type": "string",
       "title": "model",
-      "description": "Model name: jev-latest for TypeSafe, rizzo-latest for Rizzo Flow.",
+      "description": "Model name: jev-latest for TypeSafe, rizzo-latest for Rizzo Flow. [Default: jev-latest | Rizzo Flow: rizzo-latest]",
       "default": "jev-latest"
     }
   }
